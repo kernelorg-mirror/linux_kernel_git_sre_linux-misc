@@ -992,3 +992,11 @@ void ath12k_reg_free(struct ath12k_base *ab)
 	}
 	mutex_unlock(&ab->core_lock);
 }
+
+int ath12k_reg_set_cc(struct ath12k *ar)
+{
+	struct wmi_set_current_country_arg current_arg = {};
+
+	memcpy(&current_arg.alpha2, ar->alpha2, 2);
+	return ath12k_wmi_send_set_current_country_cmd(ar, &current_arg);
+}

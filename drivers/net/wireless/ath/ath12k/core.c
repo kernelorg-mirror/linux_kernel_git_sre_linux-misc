@@ -197,8 +197,15 @@ EXPORT_SYMBOL(ath12k_core_resume_early);
 
 int ath12k_core_resume(struct ath12k_base *ab)
 {
+	struct ath12k *ar;
 	long time_left;
 	int ret;
+
+	/*
+	 * so far single_pdev_only chips have supports_suspend as true
+	 * so pass 0 as a dummy pdev_id here.
+	 */
+	ar = ab->pdevs[0].ar;
 
 	ret = ath12k_core_continue_suspend_resume(ab);
 	if (ret <= 0)
@@ -209,6 +216,16 @@ int ath12k_core_resume(struct ath12k_base *ab)
 	if (time_left == 0) {
 		ath12k_warn(ab, "timeout while waiting for restart complete");
 		return -ETIMEDOUT;
+	}
+
+	if (ab->hw_params->current_cc_support &&
+	    ar->alpha2[0] != 0 && ar->alpha2[1] != 0) {
+		ret = ath12k_reg_set_cc(ar);
+		if (ret) {
+			ath12k_warn(ab, "failed to set country code during resume: %d\n",
+				    ret);
+			return ret;
+		}
 	}
 
 	return 0;
